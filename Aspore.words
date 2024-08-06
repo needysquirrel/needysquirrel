@@ -1,0 +1,28 @@
+import aspose.words as aw
+
+def replace_header_image(doc_path, old_image_name, new_image_path):
+    # Load the document
+    doc = aw.Document(doc_path)
+
+    # Iterate through all headers
+    for section in doc.sections:
+        header = section.headers_footers[aw.HeaderFooterType.HEADER_PRIMARY]
+        if header:
+            for shape in header.get_child_nodes(aw.NodeType.SHAPE, True):
+                if shape.has_image:
+                    if old_image_name in shape.image_data.title:
+                        # Replace the image
+                        shape.image_data.set_image(new_image_path)
+
+    # Save the modified document
+    new_doc_path = doc_path.replace('.docx', '_modified.docx')
+    doc.save(new_doc_path)
+    return new_doc_path
+
+# Example usage
+doc_path = 'template.docx'
+old_image_name = 'old_image.jpg'  # The name of the image file in the header you want to replace
+new_image_path = 'new_image.jpg'  # The new image file path
+
+new_doc_path = replace_header_image(doc_path, old_image_name, new_image_path)
+print(f"Modified document saved as {new_doc_path}")

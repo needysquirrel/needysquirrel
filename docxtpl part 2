@@ -1,0 +1,19 @@
+from docxtpl import DocxTemplate, InlineImage
+from docx.shared import Mm
+
+def replace_image(doc, old_image_path, new_image_path):
+    # Iterate through all the parts in the document to find the image
+    for rel in doc.part.rels.values():
+        if "image" in rel.target_ref:
+            if old_image_path in rel.target_ref:
+                # Replace the image
+                rel.target_part._blob = open(new_image_path, 'rb').read()
+
+# Load your template
+template = DocxTemplate('template.docx')
+
+# Replace the header image
+replace_image(template, 'old_image.jpg', 'new_image.jpg')
+
+# Save the document
+template.save('output.docx')

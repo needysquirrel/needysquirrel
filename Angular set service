@@ -1,0 +1,78 @@
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class SharedService {
+  private callFunctionSource = new Subject<void>();
+
+  callFunction$ = this.callFunctionSource.asObservable();
+
+  triggerFunctionCall() {
+    this.callFunctionSource.next();
+  }
+}
+
+
+*In the service, define a Subject or BehaviorSubject to communicate:
+
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class SharedService {
+  private callFunctionSource = new Subject<void>();
+
+  callFunction$ = this.callFunctionSource.asObservable();
+
+  triggerFunctionCall() {
+    this.callFunctionSource.next();
+  }
+}
+
+*In the first component (Component A), trigger the function call by using the service:
+
+import { Component } from '@angular/core';
+import { SharedService } from '../shared.service';
+
+@Component({
+  selector: 'app-component-a',
+  templateUrl: './component-a.component.html',
+})
+export class ComponentA {
+  constructor(private sharedService: SharedService) {}
+
+  someFunction() {
+    this.sharedService.triggerFunctionCall();
+  }
+}
+
+*In the second component (Component B), subscribe to the event and call the function:
+
+import { Component, OnInit } from '@angular/core';
+import { SharedService } from '../shared.service';
+
+@Component({
+  selector: 'app-component-b',
+  templateUrl: './component-b.component.html',
+})
+export class ComponentB implements OnInit {
+  constructor(private sharedService: SharedService) {}
+
+  ngOnInit(): void {
+    this.sharedService.callFunction$.subscribe(() => {
+      this.functionToCallInComponentB();
+    });
+  }
+
+  functionToCallInComponentB() {
+    console.log('Function in Component B called');
+  }
+}
+
+
+
+

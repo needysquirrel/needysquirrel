@@ -1,0 +1,153 @@
+<!-- modal.component.html -->
+<div class="modal" *ngIf="isOpen">
+  <div class="modal-content">
+    <span class="close-btn" (click)="closeModal()">&times;</span>
+    <h3>User Info</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="autocomplete-container">
+            <input
+              type="text"
+              [(ngModel)]="userInput"
+              (input)="onInputChange()"
+              name="user"
+              autocomplete="off"
+            />
+            <div class="autocomplete-suggestions" *ngIf="filteredUsers.length">
+              <div *ngFor="let user of filteredUsers" (click)="selectUser(user)">
+                {{ user.name }}
+              </div>
+            </div>
+          </td>
+          <td>{{ selectedUser?.status || '-' }}</td>
+          <td>{{ selectedUser?.date || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+----------------------
+import { Component } from '@angular/core';
+
+interface User {
+  name: string;
+  status: string;
+  date: string;
+}
+
+@Component({
+  selector: 'app-modal',
+  templateUrl: './modal.component.html',
+  styleUrls: ['./modal.component.css']
+})
+export class ModalComponent {
+  isOpen = false;
+  userInput = '';
+  selectedUser: User | null = null;
+
+  userList: User[] = [
+    { name: 'John Doe', status: 'Active', date: '2025-05-01' },
+    { name: 'Jane Smith', status: 'Inactive', date: '2025-04-15' },
+    { name: 'Jake Johnson', status: 'Active', date: '2025-05-01' }
+  ];
+
+  filteredUsers: User[] = [];
+
+  openModal() {
+    this.isOpen = true;
+    this.userInput = '';
+    this.filteredUsers = [];
+    this.selectedUser = null;
+  }
+
+  closeModal() {
+    this.isOpen = false;
+  }
+
+  onInputChange() {
+    const val = this.userInput.toLowerCase();
+    this.filteredUsers = val
+      ? this.userList.filter(u => u.name.toLowerCase().includes(val))
+      : [];
+    this.selectedUser = null;
+  }
+
+  selectUser(user: User) {
+    this.userInput = user.name;
+    this.selectedUser = user;
+    this.filteredUsers = [];
+  }
+}
+
+-------------------
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  width: 400px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.close-btn {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocomplete-suggestions div {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.autocomplete-suggestions div:hover {
+  background-color: #e0e0e0;
+}

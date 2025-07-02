@@ -1,0 +1,29 @@
+import pyautogui
+import time
+# Function to move the mouse in a square pattern
+def move_mouse():
+    print("Starting mouse movement...")
+    for i in range(10):  # Repeat 10 times
+        pyautogui.move(100, 0, duration=0.5)  # Move right
+        pyautogui.move(0, 100, duration=0.5)  # Move down
+        pyautogui.move(-100, 0, duration=0.5) # Move left
+        pyautogui.move(0, -100, duration=0.5) # Move up
+    print("Mouse movement complete.")
+# Call the function
+move_mouse()
+
+
+Continuous Mouse Movement
+To keep the mouse moving indefinitely:
+
+import pyautogui
+import time
+while True:
+    pyautogui.move(100, 0, duration=0.5)
+    pyautogui.move(0, 100, duration=0.5)
+    pyautogui.move(-100, 0, duration=0.5)
+    pyautogui.move(0, -100, duration=0.5)
+    time.sleep(2)  # Wait for 2 seconds
+
+
+python move_mouse.py

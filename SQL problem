@@ -1,0 +1,37 @@
+-- First: calculate Effective Date
+Effective_Date = 
+    CASE 
+        WHEN TRY_CAST(DATEFROMPARTS(YEAR(Effective_Date), MONTH(@EffectiveDate), DAY(@EffectiveDate)) AS DATE) IS NOT NULL
+        THEN DATEFROMPARTS(YEAR(Effective_Date), MONTH(@EffectiveDate), DAY(@EffectiveDate))
+        ELSE DATEFROMPARTS(
+                YEAR(Effective_Date),
+                MONTH(@EffectiveDate),
+                DAY(EOMONTH(DATEFROMPARTS(YEAR(Effective_Date), MONTH(@EffectiveDate), 1)))
+             )
+    END,
+
+-- Now: Expiration Date
+Expiration_Date =
+    CASE 
+        -- Case 1: @EffectiveDate is Jan 1 => Expiration = Dec 31 of previous year
+        WHEN DAY(@EffectiveDate) = 1 AND MONTH(@EffectiveDate) = 1
+            THEN DATEFROMPARTS(YEAR(Expiration_Date) - 1, 12, 31)
+
+        -- Case 2: Day = 1 but not January => Last day of previous month in same year
+        WHEN DAY(@EffectiveDate) = 1
+            THEN EOMONTH(DATEFROMPARTS(YEAR(Expiration_Date), MONTH(@EffectiveDate) - 1, 1))
+
+        -- Case 3: Default => One day before constructed effective date
+        ELSE 
+            DATEADD(DAY, -1, 
+                CASE 
+                    WHEN TRY_CAST(DATEFROMPARTS(YEAR(Expiration_Date), MONTH(@EffectiveDate), DAY(@EffectiveDate)) AS DATE) IS NOT NULL
+                    THEN DATEFROMPARTS(YEAR(Expiration_Date), MONTH(@EffectiveDate), DAY(@EffectiveDate))
+                    ELSE DATEFROMPARTS(
+                            YEAR(Expiration_Date),
+                            MONTH(@EffectiveDate),
+                            DAY(EOMONTH(DATEFROMPARTS(YEAR(Expiration_Date), MONTH(@EffectiveDate), 1)))
+                         )
+                END
+            )
+    END

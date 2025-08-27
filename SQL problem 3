@@ -1,0 +1,65 @@
+DECLARE @EffectiveDate DATE = '2023-01-01'; -- input
+DECLARE @AccountId INT = 123;               -- input
+
+DECLARE @Counter INT = 1;
+DECLARE @CurrEffective DATE;
+DECLARE @CurrExpiry DATE;
+DECLARE @NextAlignedEffective DATE;
+
+WHILE @Counter <= 16
+BEGIN
+    -- ========== Effective Date (align month/day to the same year; fallback to month-end if invalid) ==========
+    IF TRY_CAST(DATEFROMPARTS(YEAR(@EffectiveDate), MONTH(@EffectiveDate), DAY(@EffectiveDate)) AS DATE) IS NOT NULL
+    BEGIN
+        SET @CurrEffective = DATEFROMPARTS(YEAR(@EffectiveDate), MONTH(@EffectiveDate), DAY(@EffectiveDate));
+    END
+    ELSE
+    BEGIN
+        -- fallback to last day of that month in the same year
+        SET @CurrEffective = DATEFROMPARTS(
+            YEAR(@EffectiveDate),
+            MONTH(@EffectiveDate),
+            DAY(EOMONTH(DATEFROMPARTS(YEAR(@EffectiveDate), MONTH(@EffectiveDate), 1)))
+        );
+    END
+
+    -- ========== Next Aligned Effective (year + 1) with same month/day; fallback to month-end if invalid ==========
+    IF TRY_CAST(DATEFROMPARTS(YEAR(@EffectiveDate) + 1, MONTH(@EffectiveDate), DAY(@EffectiveDate)) AS DATE) IS NOT NULL
+    BEGIN
+        SET @NextAlignedEffective = DATEFROMPARTS(YEAR(@EffectiveDate) + 1, MONTH(@EffectiveDate), DAY(@EffectiveDate));
+    END
+    ELSE
+    BEGIN
+        -- fallback to last day of that month in the next year
+        SET @NextAlignedEffective = DATEFROMPARTS(
+            YEAR(@EffectiveDate) + 1,
+            MONTH(@EffectiveDate),
+            DAY(EOMONTH(DATEFROMPARTS(YEAR(@EffectiveDate) + 1, MONTH(@EffectiveDate), 1)))
+        );
+    END
+
+    -- ========== Expiry is always one day before the next aligned effective ==========
+    SET @CurrExpiry = DATEADD(DAY, -1, @NextAlignedEffective);
+
+    -- ========== Upsert: update existing matching effective row, else insert ==========
+    IF EXISTS (
+        SELECT 1 FROM Exposure_Details
+        WHERE Account_Id = @AccountId
+          AND Effective_date = @CurrEffective
+    )
+    BEGIN
+        UPDATE Exposure_Details
+        SET Expiration_date = @CurrExpiry
+        WHERE Account_Id = @AccountId
+          AND Effective_date = @CurrEffective;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Exposure_Details (Account_Id, Effective_date, Expiration_date)
+        VALUES (@AccountId, @CurrEffective, @CurrExpiry);
+    END
+
+    -- move one year back for next iteration
+    SET @EffectiveDate = DATEADD(YEAR, -1, @EffectiveDate);
+    SET @Counter = @Counter + 1;
+END;

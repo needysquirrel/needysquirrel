@@ -1,0 +1,24 @@
+DECLARE @EffectiveDate DATE = '2025-08-27'; -- input param
+DECLARE @AccountId INT = 123;               -- input param
+
+;WITH YearsBack AS (
+    SELECT 0 AS n
+    UNION ALL
+    SELECT n + 1 FROM YearsBack WHERE n < 15
+),
+DateGrid AS (
+    SELECT 
+        @AccountId AS AccountId,
+        DATEADD(YEAR, -n, @EffectiveDate) AS EffectiveDate,
+        DATEADD(YEAR, -n + 1, @EffectiveDate) AS ExpirationDate
+    FROM YearsBack
+)
+MERGE Exposure_Details AS target
+USING DateGrid AS source
+ON target.Account_Id = source.AccountId
+   AND target.Effective_date = source.EffectiveDate
+WHEN MATCHED THEN
+    UPDATE SET target.Expiration_date = source.ExpirationDate
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (Account_Id, Effective_date, Expiration_date)
+    VALUES (source.AccountId, source.EffectiveDate, source.ExpirationDate);
